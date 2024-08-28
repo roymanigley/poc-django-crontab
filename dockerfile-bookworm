@@ -1,0 +1,30 @@
+FROM python:3.11-bookworm
+
+RUN apt update && apt upgrade -y
+RUN apt install -y cron rsyslog
+
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+ENV DJANGO_DEBUG false
+ENV DJANGO_DB_DIR '/var/data/django-cron/db'
+RUN mkdir -p ${DJANGO_DB_DIR}
+
+WORKDIR /opt/app
+
+COPY requirements.txt /opt/app/
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . /opt/app/
+
+RUN addgroup app-group && adduser app-user && adduser app-user app-group
+RUN chown app-user:app-group ${DJANGO_DB_DIR} -R
+
+RUN chmod u+s /usr/sbin/cron
+RUN echo '#!/bin/sh' > /usr/local/bin/docker-entrypoint.sh
+RUN echo 'env >> /etc/environment' >> /usr/local/bin/docker-entrypoint.sh
+RUN echo 'cron -l 15' >> /usr/local/bin/docker-entrypoint.sh
+RUN echo 'exec su app-user -c "$@"' >> /usr/local/bin/docker-entrypoint.sh
+
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+
+CMD ["./entrypoint.sh"]

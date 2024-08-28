@@ -1,0 +1,23 @@
+services:
+  django-cron-bookworm:
+    build:
+      dockerfile: dockerfile-bookworm
+      context: .
+    ports:
+      - 8001:8000
+    volumes:
+      - django-cron-bookworm-db-files:/var/data/django-cron/db/
+
+  django-cron-alpine:
+    build:
+      dockerfile: dockerfile-alpine
+      context: .
+    ports:
+      - 8000:8000
+    volumes:
+      - django-cron-alpine-db-files:/var/data/django-cron/db
+
+
+volumes:
+  django-cron-alpine-db-files:
+  django-cron-bookworm-db-files:
